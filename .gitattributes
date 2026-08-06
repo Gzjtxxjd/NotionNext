@@ -1,0 +1,11 @@
+# ============================================================
+# 本地个性化文件保护 (fork 同步防覆盖)
+# 机制: 自定义 merge driver "keep-ours"
+#   当本地修改过的文件与 upstream 更新发生冲突时,
+#   git 自动保留本地版本, 不再弹出冲突提示。
+# 配置 driver (每台机器执行一次):
+#   git config merge.keep-ours.driver true
+# ============================================================
+
+themes/theme.js   merge=keep-ours
+themes/heo/**     merge=keep-ours
