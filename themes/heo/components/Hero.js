@@ -5,7 +5,7 @@ import { siteConfig } from '@/lib/config'
 import { useGlobal } from '@/lib/global'
 import SmartLink from '@/components/SmartLink'
 import { useRouter } from 'next/router'
-import { useImperativeHandle, useRef, useState } from 'react'
+import { useEffect, useImperativeHandle, useRef, useState } from 'react'
 import CONFIG from '../config'
 
 /**
@@ -48,22 +48,50 @@ function BannerGroup(props) {
     // 左侧英雄区
     <div
       id='bannerGroup'
-      className='flex flex-col justify-between flex-1 mr-2 max-w-[42rem]'>
+      className='hidden lg:flex flex-col justify-between w-2/3 mr-2'>
       {/* 动图 */}
       <Banner {...props} />
-      {/* 导航分类 */}
-      <GroupMenu />
     </div>
   )
 }
 
 /**
  * 英雄区左上角banner动图
+ * 支持3张图片轮播，带左右翻页按钮
  * @returns
  */
 function Banner(props) {
   const router = useRouter()
-  const { allNavPages } = props
+  const { allNavPages, siteInfo } = props
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  // 3张轮播图片
+  const bannerImages = [
+    'https://adwebfile.vip.cpolar.cn/uploads/2ea2bb38-595d-4af9-8a47-a2d9d3d01c2f.jpg',
+    'https://adwebfile.vip.cpolar.cn/uploads/135ea43c-0513-4720-bee5-b970d66a2beb.jpg',
+    'https://adwebfile.vip.cpolar.cn/uploads/68ec89ac-0afe-46fd-bc83-58d05708ff88.jpg'
+  ]
+
+  // 自动轮播
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % bannerImages.length)
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [])
+
+  // 上一张
+  const handlePrev = (e) => {
+    e.stopPropagation()
+    setCurrentIndex((prev) => (prev - 1 + bannerImages.length) % bannerImages.length)
+  }
+
+  // 下一张
+  const handleNext = (e) => {
+    e.stopPropagation()
+    setCurrentIndex((prev) => (prev + 1) % bannerImages.length)
+  }
+
   /**
    * 随机跳转文章
    */
@@ -73,43 +101,71 @@ function Banner(props) {
     router.push(`${siteConfig('SUB_PATH', '')}/${randomPost?.slug}`)
   }
 
-  // 遮罩文字
-  const coverTitle = siteConfig('HEO_HERO_COVER_TITLE')
-
   return (
     <div
       id='banners'
-      onClick={handleClickBanner}
-        className='hidden xl:flex xl:flex-col group h-full bg-[var(--heo-color-card)] dark:bg-[var(--heo-color-card-dark)] rounded-xl border dark:border-gray-700 mb-3 relative overflow-hidden'>
+      className='hidden lg:flex group h-[388px] rounded-xl mb-3 relative overflow-hidden'>
+      {/* 轮播图片 */}
+      {bannerImages.map((img, index) => (
+        <img
+          key={index}
+          src={img}
+          className={`absolute w-full h-full object-cover transition-opacity duration-500 ${
+            index === currentIndex ? 'opacity-100' : 'opacity-0'
+          }`}
+          alt={`Banner ${index + 1}`}
+        />
+      ))}
+      
+      {/* 文字信息 */}
       <div
         id='banner-title'
-        className='z-10 flex flex-col absolute top-10 left-10'>
-        <div className='text-4xl font-bold mb-3  dark:text-white'>
+        className='z-10 flex flex-col absolute bottom-10 left-10 text-white'>
+        {/* <div className='text-xs font-light mb-2'>
+          全球精选
+        </div> */}
+        <div className='text-3xl font-bold mb-2'>
           {siteConfig('HEO_HERO_TITLE_1', null, CONFIG)}
           <br />
           {siteConfig('HEO_HERO_TITLE_2', null, CONFIG)}
         </div>
-        <div className='text-xs text-gray-600  dark:text-gray-200'>
-          {siteConfig('HEO_HERO_TITLE_3', null, CONFIG)}
-        </div>
+        {/* <div className='text-xs text-gray-200'>
+          跳洪Heo
+        </div> */}
       </div>
 
-      {/* 斜向滚动的图标 */}
-      <TagsGroupBar />
+      {/* 左侧翻页按钮 */}
+      <button
+        onClick={handlePrev}
+        className='absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/30 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/50 transition-all duration-300 opacity-0 group-hover:opacity-100'>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+      </button>
 
-      {/* 遮罩 */}
-      <div
-        id='banner-cover'
-        style={{ backdropFilter: 'blur(15px)' }}
-        className={
-          'z-20 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 duration-300 transition-all bg-[var(--heo-color-primary)] dark:bg-[var(--heo-color-accent)] dark:text-white cursor-pointer absolute w-full h-full top-0 flex justify-start items-center'
-        }>
-        <div className='ml-12 -translate-x-32 group-hover:translate-x-0 duration-300 transition-all ease-in'>
-          <div className='text-7xl text-white font-extrabold'>{coverTitle}</div>
-          <div className='-ml-3 text-gray-300'>
-            <ArrowSmallRight className={'w-24 h-24 stroke-2'} />
-          </div>
-        </div>
+      {/* 右侧翻页按钮 */}
+      <button
+        onClick={handleNext}
+        className='absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/30 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/50 transition-all duration-300 opacity-0 group-hover:opacity-100'>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      </button>
+
+      {/* 指示器 */}
+      <div className='absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex space-x-2'>
+        {bannerImages.map((_, index) => (
+          <button
+            key={index}
+            onClick={(e) => {
+              e.stopPropagation()
+              setCurrentIndex(index)
+            }}
+            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              index === currentIndex ? 'bg-white w-6' : 'bg-white/50'
+            }`}
+          />
+        ))}
       </div>
     </div>
   )
@@ -178,7 +234,7 @@ function GroupMenu() {
     <div className='h-[165px] select-none xl:h-20 flex flex-col justify-between xl:space-y-0 xl:flex-row w-28 lg:w-48 xl:w-full xl:flex-nowrap xl:space-x-3'>
       <SmartLink
         href={url_1}
-        className='group relative overflow-hidden bg-[var(--heo-color-primary)] flex h-20 justify-start items-center text-[var(--heo-color-primary-text)] rounded-xl xl:hover:w-1/2 xl:w-1/3 transition-all duration-500 ease-in'>
+        className='group relative overflow-hidden bg-gradient-to-r from-blue-500 to-blue-400 flex h-20 justify-start items-center text-white rounded-xl xl:hover:w-1/2 xl:w-1/3 transition-all duration-500 ease-in'>
         <div className='font-bold lg:text-lg  pl-5 relative -mt-2'>
           {title_1}
           <span className='absolute -bottom-0.5 left-5 w-5 h-0.5 bg-white rounded-full'></span>
@@ -220,10 +276,6 @@ function GroupMenu() {
 function TopGroup(props) {
   const { latestPosts, allNavPages, siteInfo } = props
   const { locale } = useGlobal()
-  const todayCardRef = useRef()
-  function handleMouseLeave() {
-    todayCardRef.current.coverUp()
-  }
 
   // 获取置顶推荐文章
   const topPosts = getTopPosts({ latestPosts, allNavPages })
@@ -231,36 +283,31 @@ function TopGroup(props) {
   return (
     <div
       id='hero-right-wrapper'
-      onMouseLeave={handleMouseLeave}
-      className='flex-1 relative w-full'>
+      className='w-full lg:w-1/3 relative'>
       {/* 置顶推荐文章 */}
       <div
         id='top-group'
-        className='w-full flex space-x-3 xl:space-x-0 xl:grid xl:grid-cols-3 xl:gap-3 xl:h-[342px]'>
-        {topPosts?.map((p, index) => {
+        className='w-full flex flex-col space-y-3 xl:h-[388px]'>
+        {topPosts?.slice(0, 4).map((p, index) => {
           return (
             <SmartLink href={`${siteConfig('SUB_PATH', '')}/${p?.slug}`} key={index}>
-              <div className='cursor-pointer h-[164px] group relative flex flex-col w-52 xl:w-full overflow-hidden shadow bg-white dark:bg-black dark:text-white rounded-xl'>
+              <div className='cursor-pointer group relative flex flex-row items-center w-full overflow-hidden shadow bg-white dark:bg-black dark:text-white rounded-xl p-3'>
                 <LazyImage
                   priority={index === 0}
-                  className='h-24 object-cover'
+                  className='w-16 h-16 object-cover rounded-lg'
                   alt={p?.title}
                   src={p?.pageCoverThumbnail || siteInfo?.pageCover}
                 />
-                <div className='group-hover:text-[var(--heo-color-primary)] dark:group-hover:text-[var(--heo-color-accent)] line-clamp-2 overflow-hidden m-2 font-semibold'>
-                  {p?.title}
-                </div>
-                {/* hover 悬浮的 ‘荐’ 字 */}
-                <div className='opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 duration-200 transition-all absolute -top-2 -left-2 bg-[var(--heo-color-primary)] dark:bg-[var(--heo-color-accent)] text-[var(--heo-color-primary-text)] rounded-xl overflow-hidden pr-2 pb-2 pl-4 pt-4 text-xs'>
-                  {locale.COMMON.RECOMMEND_BADGES}
+                <div className='ml-3 flex-1 overflow-hidden'>
+                  <div className='group-hover:text-indigo-600 dark:group-hover:text-yellow-600 truncate font-semibold'>
+                    {p?.title}
+                  </div>
                 </div>
               </div>
             </SmartLink>
           )
         })}
       </div>
-      {/* 一个大的跳转文章卡片 */}
-      <TodayCard cRef={todayCardRef} siteInfo={siteInfo} />
     </div>
   )
 }
@@ -320,10 +367,8 @@ function TodayCard({ cRef, siteInfo }) {
   const router = useRouter()
   const link = siteConfig('HEO_HERO_TITLE_LINK', null, CONFIG)
   const { locale } = useGlobal()
-  // 获取遮罩控制配置
-  const coverEnable = siteConfig('HEO_HERO_RECOMMEND_COVER_ENABLE', true, CONFIG)
-  // 卡牌是否盖住下层，如果配置为false则默认不盖住
-  const [isCoverUp, setIsCoverUp] = useState(coverEnable)
+  // 卡牌是否盖住下层
+  const [isCoverUp, setIsCoverUp] = useState(true)
 
   /**
    * 外部可以调用此方法
@@ -331,9 +376,7 @@ function TodayCard({ cRef, siteInfo }) {
   useImperativeHandle(cRef, () => {
     return {
       coverUp: () => {
-        if (coverEnable) {
-          setIsCoverUp(true)
-        }
+        setIsCoverUp(true)
       }
     }
   })
@@ -353,11 +396,6 @@ function TodayCard({ cRef, siteInfo }) {
    */
   function handleCardClick(e) {
     router.push(link)
-  }
-
-  // 如果配置为不显示遮罩，则不渲染TodayCard
-  if (!coverEnable) {
-    return null
   }
 
   return (

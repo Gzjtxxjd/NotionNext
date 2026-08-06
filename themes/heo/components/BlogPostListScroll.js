@@ -52,7 +52,7 @@ const BlogPostListScroll = ({
 
   // 监听滚动
   useEffect(() => {
-    window.addEventListener('scroll', scrollTrigger, { passive: true })
+    window.addEventListener('scroll', scrollTrigger)
     return () => {
       window.removeEventListener('scroll', scrollTrigger)
     }

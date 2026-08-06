@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import { useImperativeHandle, useRef, useState } from 'react'
 import { useGlobal } from '@/lib/global'
+let lock = false
 
 const SearchInput = props => {
   const { currentSearch, cRef, className } = props
@@ -8,9 +9,6 @@ const SearchInput = props => {
   const router = useRouter()
   const searchInputRef = useRef()
   const { locale } = useGlobal()
-  // 输入法组合期锁定 — 用 useRef 持有，避免使用模块级变量在 SSR
-  // 多请求 / 多实例间互相污染（之前 `let lock = false` 是模块作用域）。
-  const lockRef = useRef(false)
   useImperativeHandle(cRef, () => {
     return {
       focus: () => {
@@ -46,7 +44,7 @@ const SearchInput = props => {
 
   const [showClean, setShowClean] = useState(false)
   const updateSearchKey = val => {
-    if (lockRef.current) {
+    if (lock) {
       return
     }
     searchInputRef.current.value = val
@@ -58,11 +56,11 @@ const SearchInput = props => {
     }
   }
   function lockSearchInput () {
-    lockRef.current = true
+    lock = true
   }
 
   function unLockSearchInput () {
-    lockRef.current = false
+    lock = false
   }
 
   return (
