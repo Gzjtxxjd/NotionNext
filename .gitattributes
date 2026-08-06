@@ -9,3 +9,5 @@
 
 themes/theme.js   merge=keep-ours
 themes/heo/**     merge=keep-ours
+conf/comment.config.js   merge=keep-ours
+public/favicon.ico       merge=keep-ours
